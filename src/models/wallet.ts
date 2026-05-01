@@ -1,3 +1,5 @@
+import { StockEntry } from "../types";
+
 export class Wallet {
   private stocks: Map<string, number> = new Map();
 
@@ -12,8 +14,16 @@ export class Wallet {
 
   removeOne(name: string): void {
     const cur = this.stocks.get(name) ?? 0;
-    if (cur <= 0) throw new Error('insufficient');
+    if (cur <= 0) throw new Error("insufficient");
     if (cur === 1) this.stocks.delete(name);
     else this.stocks.set(name, cur - 1);
+  }
+
+  getAllStocks(): StockEntry[] {
+    const res: StockEntry[] = [];
+    for (const [name, quantity] of this.stocks.entries()) {
+      res.push({ name, quantity });
+    }
+    return res;
   }
 }

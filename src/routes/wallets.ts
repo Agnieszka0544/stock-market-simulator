@@ -31,4 +31,23 @@ router.post("/wallets/:walletId/stocks/:stockName", (req, res) => {
   return res.sendStatus(200);
 });
 
+router.get("/wallets/:walletId", (req, res) => {
+  const { walletId } = req.params;
+  if (!wallets.has(walletId))
+    return res.status(404).json({ error: "wallet_not_found" });
+
+  const wallet = wallets.get(walletId)!;
+  return res.status(200).json({ id: walletId, stocks: wallet.getAllStocks() });
+});
+
+router.get("/wallets/:walletId/stocks/:stockName", (req, res) => {
+  const { walletId, stockName } = req.params;
+  if (!wallets.has(walletId))
+    return res.status(404).json({ error: "wallet_not_found" });
+
+  const wallet = wallets.get(walletId)!;
+  const quantity = wallet.getQuantity(stockName);
+  return res.status(200).send(String(quantity));
+});
+
 export default router;
