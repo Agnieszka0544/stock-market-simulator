@@ -1,3 +1,5 @@
+import { StockEntry } from "../types";
+
 export class Bank {
   private stocks: Map<string, number> = new Map();
 
@@ -20,5 +22,21 @@ export class Bank {
     const current = this.stocks.get(name);
     if (current === undefined) throw new Error("not_found");
     this.stocks.set(name, current + 1);
+  }
+
+  getAllStocks(): StockEntry[] {
+    const result: StockEntry[] = [];
+    for (const [name, quantity] of this.stocks.entries()) {
+      result.push({ name, quantity });
+    }
+    return result;
+  }
+
+  setStocks(entries: StockEntry[]): void {
+    const nextStocks = new Map<string, number>();
+    for (const entry of entries) {
+      nextStocks.set(entry.name, entry.quantity);
+    }
+    this.stocks = nextStocks;
   }
 }
