@@ -83,6 +83,32 @@ npm run dev
 npm test
 ```
 
+#### Code Quality
+
+Check code style with ESLint:
+
+```bash
+npm run lint
+```
+
+Auto-fix linting issues:
+
+```bash
+npm run lint:fix
+```
+
+Format code with Prettier:
+
+```bash
+npm run format
+```
+
+Check formatting without changes:
+
+```bash
+npm run format:check
+```
+
 #### Run in Production Mode
 
 Build the project and start the compiled server.
@@ -136,3 +162,4 @@ curl http://localhost:3000/log
 - **Node.js + TypeScript**: Type-safe backend runtime
 - **Express.js**: REST API framework
 - **Jest + Supertest**: Automated API and behavior tests
+- **ESLint + Prettier**: Code linting and formatting
