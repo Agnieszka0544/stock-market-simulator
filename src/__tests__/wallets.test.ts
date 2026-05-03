@@ -1,20 +1,16 @@
 import express from "express";
 import request from "supertest";
-import walletsRouter from "../routes/wallets";
-import { bank, wallets } from "../store";
+import { createApp } from "../createApp";
+import { AppContext } from "../appContext";
 import { Wallet } from "../models/wallet";
 
 describe("POST /wallets/:walletId/stocks/:stockName", () => {
   let app: express.Application;
-  const bankStocks = (bank as unknown as { stocks: Map<string, number> })
-    .stocks;
+  let appContext: AppContext;
 
   beforeEach(() => {
-    wallets.clear();
-    bankStocks.clear();
-    app = express();
-    app.use(express.json());
-    app.use(walletsRouter);
+    app = createApp();
+    appContext = app.locals.appContext as AppContext;
   });
 
   it("should return stock_not_found and keep wallets empty when bank has no stock", async () => {
@@ -24,24 +20,26 @@ describe("POST /wallets/:walletId/stocks/:stockName", () => {
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: "stock_not_found" });
-    expect(wallets.has("wallet1")).toBe(false);
+    expect(appContext.getWallets().has("wallet1")).toBe(false);
   });
 
   it("should create wallet, buy one stock, and decrement bank quantity", async () => {
-    bankStocks.set("stock1", 2);
+    appContext.getBank().setStocks([{ name: "stock1", quantity: 2 }]);
 
     const response = await request(app)
       .post("/wallets/new-wallet/stocks/stock1")
       .send({ type: "buy" });
 
     expect(response.status).toBe(200);
-    expect(wallets.has("new-wallet")).toBe(true);
-    expect(wallets.get("new-wallet")?.getQuantity("stock1")).toBe(1);
-    expect(bank.getQuantity("stock1")).toBe(1);
+    expect(appContext.getWallets().has("new-wallet")).toBe(true);
+    expect(
+      appContext.getWallets().get("new-wallet")?.getQuantity("stock1"),
+    ).toBe(1);
+    expect(appContext.getBank().getQuantity("stock1")).toBe(1);
   });
 
   it("should fail with wallet_out_of_stock on sell when wallet has none and keep bank unchanged", async () => {
-    bankStocks.set("stock1", 3);
+    appContext.getBank().setStocks([{ name: "stock1", quantity: 3 }]);
 
     const response = await request(app)
       .post("/wallets/seller/stocks/stock1")
@@ -49,23 +47,21 @@ describe("POST /wallets/:walletId/stocks/:stockName", () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "wallet_out_of_stock" });
-    expect(wallets.has("seller")).toBe(true);
-    expect(wallets.get("seller")?.getQuantity("stock1")).toBe(0);
-    expect(bank.getQuantity("stock1")).toBe(3);
+    expect(appContext.getWallets().has("seller")).toBe(true);
+    expect(appContext.getWallets().get("seller")?.getQuantity("stock1")).toBe(
+      0,
+    );
+    expect(appContext.getBank().getQuantity("stock1")).toBe(3);
   });
 });
 
 describe("GET /wallets/:walletId", () => {
   let app: express.Application;
-  const bankStocks = (bank as unknown as { stocks: Map<string, number> })
-    .stocks;
+  let appContext: AppContext;
 
   beforeEach(() => {
-    wallets.clear();
-    bankStocks.clear();
-    app = express();
-    app.use(express.json());
-    app.use(walletsRouter);
+    app = createApp();
+    appContext = app.locals.appContext as AppContext;
   });
 
   it("should return current state of a wallet", async () => {
@@ -73,7 +69,7 @@ describe("GET /wallets/:walletId", () => {
     wallet.addOne("stock1");
     wallet.addOne("stock1");
     wallet.addOne("stock2");
-    wallets.set("w12", wallet);
+    appContext.getWallets().set("w12", wallet);
 
     const response = await request(app).get("/wallets/w12");
 
@@ -98,22 +94,18 @@ describe("GET /wallets/:walletId", () => {
 
 describe("GET /wallets/:walletId/stocks/:stockName", () => {
   let app: express.Application;
-  const bankStocks = (bank as unknown as { stocks: Map<string, number> })
-    .stocks;
+  let appContext: AppContext;
 
   beforeEach(() => {
-    wallets.clear();
-    bankStocks.clear();
-    app = express();
-    app.use(express.json());
-    app.use(walletsRouter);
+    app = createApp();
+    appContext = app.locals.appContext as AppContext;
   });
 
   it("should return stock quantity for a wallet", async () => {
     const wallet = new Wallet();
     wallet.addOne("stock1");
     wallet.addOne("stock1");
-    wallets.set("qty-wallet", wallet);
+    appContext.getWallets().set("qty-wallet", wallet);
 
     const response = await request(app).get(
       "/wallets/qty-wallet/stocks/stock1",
@@ -135,7 +127,7 @@ describe("GET /wallets/:walletId/stocks/:stockName", () => {
   it("should return 0 when requested stock does not exist in the wallet", async () => {
     const wallet = new Wallet();
     wallet.addOne("stock1");
-    wallets.set("missing-stock-wallet", wallet);
+    appContext.getWallets().set("missing-stock-wallet", wallet);
 
     const response = await request(app).get(
       "/wallets/missing-stock-wallet/stocks/stock2",

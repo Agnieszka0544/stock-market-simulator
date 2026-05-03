@@ -1,24 +1,19 @@
 import express from "express";
 import request from "supertest";
-import routes from "../routes";
-import { bank, wallets, audit } from "../store";
+import { createApp } from "../createApp";
+import { AppContext } from "../appContext";
 
 describe("GET /log", () => {
   let app: express.Application;
-  const bankStocks = (bank as unknown as { stocks: Map<string, number> })
-    .stocks;
+  let appContext: AppContext;
 
   beforeEach(() => {
-    wallets.clear();
-    bankStocks.clear();
-    (audit as unknown as { records: any[] }).records = [];
-    app = express();
-    app.use(express.json());
-    app.use(routes);
+    app = createApp();
+    appContext = app.locals.appContext as AppContext;
   });
 
   it("returns entire audit log in order and only successful operations", async () => {
-    bankStocks.set("s1", 2);
+    appContext.getBank().setStocks([{ name: "s1", quantity: 2 }]);
 
     const r1 = await request(app)
       .post("/wallets/w1/stocks/s1")
@@ -41,7 +36,7 @@ describe("GET /log", () => {
   });
 
   it("does not log failed operations", async () => {
-    bankStocks.set("s2", 1);
+    appContext.getBank().setStocks([{ name: "s2", quantity: 1 }]);
 
     const r1 = await request(app)
       .post("/wallets/w2/stocks/s2")
@@ -56,16 +51,11 @@ describe("GET /log", () => {
 
 describe("POST /chaos", () => {
   let app: express.Application;
-  const bankStocks = (bank as unknown as { stocks: Map<string, number> })
-    .stocks;
+  let appContext: AppContext;
 
   beforeEach(() => {
-    wallets.clear();
-    bankStocks.clear();
-    (audit as unknown as { records: any[] }).records = [];
-    app = express();
-    app.use(express.json());
-    app.use(routes);
+    app = createApp();
+    appContext = app.locals.appContext as AppContext;
   });
 
   it("triggers process.exit to kill the instance", async () => {

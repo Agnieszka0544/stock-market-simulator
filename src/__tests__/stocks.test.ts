@@ -1,24 +1,22 @@
 import express from "express";
 import request from "supertest";
-import routes from "../routes";
-import { bank, wallets } from "../store";
+import { createApp } from "../createApp";
+import { AppContext } from "../appContext";
 
 describe("GET /stocks", () => {
   let app: express.Application;
-  const bankStocks = (bank as unknown as { stocks: Map<string, number> })
-    .stocks;
+  let appContext: AppContext;
 
   beforeEach(() => {
-    wallets.clear();
-    bankStocks.clear();
-    app = express();
-    app.use(express.json());
-    app.use(routes);
+    app = createApp();
+    appContext = app.locals.appContext as AppContext;
   });
 
   it("should return current state of the bank", async () => {
-    bankStocks.set("stock1", 99);
-    bankStocks.set("stock2", 1);
+    appContext.getBank().setStocks([
+      { name: "stock1", quantity: 99 },
+      { name: "stock2", quantity: 1 },
+    ]);
 
     const response = await request(app).get("/stocks");
 
@@ -42,15 +40,11 @@ describe("GET /stocks", () => {
 
 describe("POST /stocks", () => {
   let app: express.Application;
-  const bankStocks = (bank as unknown as { stocks: Map<string, number> })
-    .stocks;
+  let appContext: AppContext;
 
   beforeEach(() => {
-    wallets.clear();
-    bankStocks.clear();
-    app = express();
-    app.use(express.json());
-    app.use(routes);
+    app = createApp();
+    appContext = app.locals.appContext as AppContext;
   });
 
   it("should set bank state and return 200", async () => {
@@ -64,12 +58,12 @@ describe("POST /stocks", () => {
       });
 
     expect(response.status).toBe(200);
-    expect(bank.getQuantity("stock1")).toBe(99);
-    expect(bank.getQuantity("stock2")).toBe(1);
+    expect(appContext.getBank().getQuantity("stock1")).toBe(99);
+    expect(appContext.getBank().getQuantity("stock2")).toBe(1);
   });
 
   it("should replace previous bank state", async () => {
-    bankStocks.set("old-stock", 7);
+    appContext.getBank().setStocks([{ name: "old-stock", quantity: 7 }]);
 
     const response = await request(app)
       .post("/stocks")
@@ -78,8 +72,8 @@ describe("POST /stocks", () => {
       });
 
     expect(response.status).toBe(200);
-    expect(bank.hasStock("old-stock")).toBe(false);
-    expect(bank.getQuantity("stock1")).toBe(99);
-    expect(bankStocks.size).toBe(1);
+    expect(appContext.getBank().hasStock("old-stock")).toBe(false);
+    expect(appContext.getBank().getQuantity("stock1")).toBe(99);
+    expect(appContext.getBank().getAllStocks().length).toBe(1);
   });
 });
