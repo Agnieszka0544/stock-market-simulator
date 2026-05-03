@@ -36,6 +36,7 @@ A simplified stock market service built with Express.js and TypeScript. It model
 
 - Node.js 18+ (recommended)
 - npm 9+
+- Docker and Docker Compose (optional, only needed for containerized runs)
 
 ### Install Dependencies
 
@@ -68,21 +69,37 @@ npm run build
 npm start
 ```
 
+### Run with Docker
+
+Start the API with Docker Compose if you want a containerized setup. This builds the image, starts the service, and exposes it on port 3000.
+
+```bash
+docker compose up --build
+```
+
+### Run Tests with Docker
+
+Run the test suite with a Docker Compose command:
+
+```bash
+docker compose run --rm --build test
+```
+
 ## Example Usage
 
 ```bash
 # Initialize bank
 curl -X POST http://localhost:3000/stocks \
   -H "Content-Type: application/json" \
-  -d '{"stocks": [{"name": "AAPL", "quantity": 100}]}'
+  -d '{"stocks": [{"name": "stock1", "quantity": 100}]}'
 
 # Buy stock
-curl -X POST http://localhost:3000/wallets/alice/stocks/AAPL \
+curl -X POST http://localhost:3000/wallets/wallet1/stocks/stock1 \
   -H "Content-Type: application/json" \
   -d '{"type": "buy"}'
 
 # Check wallet
-curl http://localhost:3000/wallets/alice
+curl http://localhost:3000/wallets/wallet1
 
 # View audit log
 curl http://localhost:3000/log
