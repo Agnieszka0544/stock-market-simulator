@@ -34,17 +34,42 @@ A simplified stock market service built with Express.js and TypeScript. It model
 
 ### Prerequisites
 
-- Node.js 18+ (recommended)
-- npm 9+
-- Docker and Docker Compose (optional, only needed for containerized runs)
+- Node.js 18+ (recommended) or Docker & Docker Compose (for containerized runs)
+- npm 9+ (if not using Docker)
 
-### Install Dependencies
+### Quick Start
+
+Use one of the following commands to start the application on a custom port (defaults to 3000):
+
+#### Linux/macOS (Native)
+
+```bash
+./start.sh 3000
+```
+
+#### Windows (Native)
+
+```bash
+start.bat 3000
+```
+
+#### Docker (All Platforms)
+
+```bash
+PORT=3000 docker compose up --build
+```
+
+Default URL: `http://localhost:3000`
+
+### Native Installation
+
+#### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### Run in Development Mode
+#### Run in Development Mode
 
 Starts the API with auto-reload on file changes.
 
@@ -52,15 +77,13 @@ Starts the API with auto-reload on file changes.
 npm run dev
 ```
 
-Default URL: `http://localhost:3000`
-
-### Run Tests
+#### Run Tests
 
 ```bash
 npm test
 ```
 
-### Run in Production Mode
+#### Run in Production Mode
 
 Build the project and start the compiled server.
 
@@ -69,17 +92,32 @@ npm run build
 npm start
 ```
 
-### Run with Docker
-
-Start the API with Docker Compose if you want a containerized setup. This builds the image, starts the service, and exposes it on port 3000.
-
+Specify a custom port:
 ```bash
-docker compose up --build
+PORT=3000 npm start
 ```
 
-### Run Tests with Docker
+### Docker
 
-Run the test suite with a Docker Compose command:
+#### Build for Multiple Architectures (amd64, arm64)
+
+Linux/macOS:
+```bash
+./docker.build.sh latest
+```
+
+Windows:
+```bash
+docker.build.bat latest
+```
+
+#### Run with Docker Compose
+
+```bash
+PORT=3000 docker compose up --build
+```
+
+#### Run Tests with Docker
 
 ```bash
 docker compose run --rm --build test
