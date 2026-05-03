@@ -1,13 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Stock Market Simulator - Start Script (Linux/macOS)
-# Usage: ./start.sh [PORT]
-# Example: ./start.sh 3000
-
+# start.sh — bring up HA Docker Compose stack
+# Usage: ./start.sh [port]
 PORT=${1:-3000}
+export PORT
 
-echo "Starting Stock Market Simulator on port $PORT..."
-echo "Available at: http://localhost:$PORT"
-echo ""
+echo "Starting HA stack on port $PORT..."
+docker compose up --build -d --remove-orphans
 
-PORT=$PORT npm start
+echo "Services started. Access: http://localhost:$PORT"

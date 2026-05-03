@@ -1,19 +1,14 @@
 @echo off
-REM Stock Market Simulator - Start Script (Windows)
-REM Usage: start.bat [PORT]
-REM Example: start.bat 3000
-
-setlocal enabledelayedexpansion
-
-if "%1"=="" (
-    set PORT=3000
-) else (
-    set PORT=%1
+REM start.bat — bring up HA Docker Compose stack
+REM Usage: start.bat [port]
+IF "%1"=="" (
+  set "PORT=3000"
+) ELSE (
+  set "PORT=%1"
 )
 
-echo Starting Stock Market Simulator on port !PORT!...
-echo Available at: http://localhost:!PORT!
-echo.
+echo Starting HA stack on port %PORT%...
+docker compose up --build -d --remove-orphans
 
-set PORT=!PORT!
-npm start
+echo Services started. Access: http://localhost:%PORT%
+exit /b 0

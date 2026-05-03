@@ -99,18 +99,6 @@ PORT=3000 npm start
 
 ### Docker
 
-#### Build for Multiple Architectures (amd64, arm64)
-
-Linux/macOS:
-```bash
-./docker.build.sh latest
-```
-
-Windows:
-```bash
-docker.build.bat latest
-```
-
 #### Run with Docker Compose
 
 ```bash
