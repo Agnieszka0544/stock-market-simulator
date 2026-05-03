@@ -1,57 +1,82 @@
 import express from "express";
-import { OperationRequest } from "../types";
 import { AppContext } from "../appContext";
+import {
+  parseOperationRequest,
+  parsePathIdentifier,
+} from "../validation/requestValidation";
+import {
+  getWalletStockQuantity,
+  getWalletStocks,
+  tradeStock,
+} from "../services/marketService";
 
 const router = express.Router();
 
+function invalidRequest(res: express.Response) {
+  return res.status(400).json({ error: "invalid_request" });
+}
+
 router.post("/wallets/:walletId/stocks/:stockName", (req, res) => {
   const appContext = req.app.locals.appContext as AppContext;
-  const { walletId, stockName } = req.params;
-  const body = req.body as OperationRequest | undefined;
-  if (!body || (body.type !== "buy" && body.type !== "sell")) {
-    return res.status(400).json({ error: "invalid_request" });
+  const walletId = parsePathIdentifier(req.params.walletId);
+  const stockName = parsePathIdentifier(req.params.stockName);
+  const body = parseOperationRequest(req.body);
+
+  if (!walletId.success || !stockName.success || !body.success) {
+    return invalidRequest(res);
   }
 
-  if (!appContext.getBank().hasStock(stockName))
-    return res.status(404).json({ error: "stock_not_found" });
+  const result = tradeStock(
+    appContext,
+    walletId.data,
+    stockName.data,
+    body.data.type,
+  );
 
-  const wallet = appContext.getOrCreateWallet(walletId);
-  if (body.type === "buy") {
-    if (appContext.getBank().getQuantity(stockName) <= 0)
-      return res.status(400).json({ error: "bank_out_of_stock" });
-    appContext.getBank().withdrawOne(stockName);
-    wallet.addOne(stockName);
-  } else {
-    if (wallet.getQuantity(stockName) <= 0)
-      return res.status(400).json({ error: "wallet_out_of_stock" });
-    wallet.removeOne(stockName);
-    appContext.getBank().depositOne(stockName);
+  if (!result.success) {
+    if (result.error === "stock_not_found") {
+      return res.status(404).json({ error: result.error });
+    }
+
+    return res.status(400).json({ error: result.error });
   }
 
-  appContext
-    .getAudit()
-    .log({ wallet_id: walletId, stock_name: stockName, type: body.type });
   return res.sendStatus(200);
 });
 
 router.get("/wallets/:walletId", (req, res) => {
   const appContext = req.app.locals.appContext as AppContext;
-  const { walletId } = req.params;
-  if (!appContext.getWallets().has(walletId))
-    return res.status(404).json({ error: "wallet_not_found" });
+  const walletId = parsePathIdentifier(req.params.walletId);
+  if (!walletId.success) {
+    return invalidRequest(res);
+  }
 
-  const wallet = appContext.getWallets().get(walletId)!;
-  return res.status(200).json({ id: walletId, stocks: wallet.getAllStocks() });
+  const walletStocks = getWalletStocks(appContext, walletId.data);
+  if (!walletStocks) {
+    return res.status(404).json({ error: "wallet_not_found" });
+  }
+
+  return res.status(200).json({ id: walletId.data, stocks: walletStocks });
 });
 
 router.get("/wallets/:walletId/stocks/:stockName", (req, res) => {
   const appContext = req.app.locals.appContext as AppContext;
-  const { walletId, stockName } = req.params;
-  if (!appContext.getWallets().has(walletId))
-    return res.status(404).json({ error: "wallet_not_found" });
+  const walletId = parsePathIdentifier(req.params.walletId);
+  const stockName = parsePathIdentifier(req.params.stockName);
 
-  const wallet = appContext.getWallets().get(walletId)!;
-  const quantity = wallet.getQuantity(stockName);
+  if (!walletId.success || !stockName.success) {
+    return invalidRequest(res);
+  }
+
+  const quantity = getWalletStockQuantity(
+    appContext,
+    walletId.data,
+    stockName.data,
+  );
+  if (quantity === null) {
+    return res.status(404).json({ error: "wallet_not_found" });
+  }
+
   return res.status(200).send(String(quantity));
 });
 

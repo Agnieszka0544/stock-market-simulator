@@ -21,6 +21,10 @@ export class AppContext {
     return this.wallets;
   }
 
+  findWallet(id: string): Wallet | undefined {
+    return this.wallets.get(id);
+  }
+
   getAudit(): AuditLog {
     return this.audit;
   }
