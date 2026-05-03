@@ -53,7 +53,42 @@ describe("POST /wallets/:walletId/stocks/:stockName", () => {
     );
     expect(appContext.getBank().getQuantity("stock1")).toBe(3);
   });
-});
+
+  it("should reject malformed trade payloads without mutating state", async () => {
+    appContext.getBank().setStocks([{ name: "stock1", quantity: 2 }]);
+
+    const response = await request(app)
+      .post("/wallets/new-wallet/stocks/stock1")
+      .send({ type: "buy", unexpected: true });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
+    expect(appContext.getWallets().has("new-wallet")).toBe(false);
+    expect(appContext.getBank().getQuantity("stock1")).toBe(2);
+  });
+
+  it("should fail buy when bank stock is empty", async () => {
+    appContext.getBank().setStocks([{ name: "stock1", quantity: 0 }]);
+
+    const response = await request(app)
+      .post("/wallets/buyer/stocks/stock1")
+      .send({ type: "buy" });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "bank_out_of_stock" });
+  });
+
+  it("should reject trade with invalid operation type", async () => {
+    appContext.getBank().setStocks([{ name: "stock1", quantity: 2 }]);
+
+    const response = await request(app)
+      .post("/wallets/wallet1/stocks/stock1")
+      .send({ type: "invalid_op" });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
+  });
+});;
 
 describe("GET /wallets/:walletId", () => {
   let app: express.Application;
@@ -89,6 +124,13 @@ describe("GET /wallets/:walletId", () => {
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: "wallet_not_found" });
+  });
+
+  it("should reject blank wallet identifiers", async () => {
+    const response = await request(app).get("/wallets/%20");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
   });
 });
 
@@ -135,5 +177,16 @@ describe("GET /wallets/:walletId/stocks/:stockName", () => {
 
     expect(response.status).toBe(200);
     expect(Number(response.text)).toBe(0);
+  });
+
+  it("should reject blank stock name in quantity query", async () => {
+    const wallet = new Wallet();
+    wallet.addOne("stock1");
+    appContext.getWallets().set("qty-wallet", wallet);
+
+    const response = await request(app).get("/wallets/qty-wallet/stocks/%20");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
   });
 });

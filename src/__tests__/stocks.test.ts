@@ -76,4 +76,54 @@ describe("POST /stocks", () => {
     expect(appContext.getBank().getQuantity("stock1")).toBe(99);
     expect(appContext.getBank().getAllStocks().length).toBe(1);
   });
+
+  it("should reject malformed stock collections", async () => {
+    const response = await request(app).post("/stocks").send({
+      stocks: [{ name: "stock1", quantity: -1 }],
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
+    expect(appContext.getBank().getAllStocks()).toEqual([]);
+  });
+
+  it("should reject non-integer quantities", async () => {
+    const response = await request(app)
+      .post("/stocks")
+      .send({
+        stocks: [{ name: "stock1", quantity: 1.5 }],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
+  });
+
+  it("should reject empty stock name", async () => {
+    const response = await request(app)
+      .post("/stocks")
+      .send({
+        stocks: [{ name: "", quantity: 100 }],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
+  });
+
+  it("should reject POST /stocks with missing stocks field", async () => {
+    const response = await request(app).post("/stocks").send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
+  });
+
+  it("should reject stock entry with extra fields", async () => {
+    const response = await request(app)
+      .post("/stocks")
+      .send({
+        stocks: [{ name: "stock1", quantity: 100, extra: "field" }],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_request" });
+  });
 });
