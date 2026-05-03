@@ -51,17 +51,15 @@ describe("GET /log", () => {
 
 describe("POST /chaos", () => {
   let app: express.Application;
-  let appContext: AppContext;
 
   beforeEach(() => {
     app = createApp();
-    appContext = app.locals.appContext as AppContext;
   });
 
   it("triggers process.exit to kill the instance", async () => {
     const originalExit = process.exit;
     let exitCalled = false;
-    (process as any).exit = (code?: number) => {
+    (process as any).exit = (_code?: number) => {
       exitCalled = true;
     };
 
