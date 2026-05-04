@@ -1,4 +1,4 @@
-import { AuditRecord } from "../types";
+import { AuditRecord } from '../types';
 
 export class AuditLog {
   private records: AuditRecord[] = [];

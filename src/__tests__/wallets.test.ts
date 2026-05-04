@@ -88,7 +88,7 @@ describe("POST /wallets/:walletId/stocks/:stockName", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "invalid_request" });
   });
-});
+});;
 
 describe("GET /wallets/:walletId", () => {
   let app: express.Application;

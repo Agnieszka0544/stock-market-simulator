@@ -78,11 +78,9 @@ describe("POST /stocks", () => {
   });
 
   it("should reject malformed stock collections", async () => {
-    const response = await request(app)
-      .post("/stocks")
-      .send({
-        stocks: [{ name: "stock1", quantity: -1 }],
-      });
+    const response = await request(app).post("/stocks").send({
+      stocks: [{ name: "stock1", quantity: -1 }],
+    });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "invalid_request" });
